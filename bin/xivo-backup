@@ -16,7 +16,7 @@ DEFAULT_MAX_SOUND_FILE_SIZE=10M
 DEFAULT_MAX_FILES_PER_SOUND_DIR=100
 XIVO_VERSION=$(LANG="C" apt-cache policy xivo | grep Installed | grep -oE '([0-9]{2}\.[0-9]+|1\.2\.[0-9]{1,2})' | head -n1)
 BACKUP_FILE=${BACKUP_FILE}.tgz
-
+GZIP_THROTTLE=40
 
 case "${BACKUP_TYPE}" in
   data)
@@ -83,7 +83,9 @@ case "${BACKUP_TYPE}" in
 
     # ... as well as in backup list
     TAR_WOULD_BACKUP=$(echo "${WOULD_BACKUP}" | sed -r 's#(^| )/#\1#g')
+    cpulimit -e gzip -l $GZIP_THROTTLE > /dev/null 2> /dev/null & echo $! > /var/run/cpulimit.gzip.pid
     tar cpz -C / --exclude-from=${EXCL_FILE} --ignore-failed-read -f ${BACKUP_FILE} ${TAR_WOULD_BACKUP} >/dev/null
+    kill -9 `cat /var/run/cpulimit.gzip.pid` ; rm /var/run/cpulimit.gzip.pid
 
     rm -rf ${EXCL_FILE}
     ;;
