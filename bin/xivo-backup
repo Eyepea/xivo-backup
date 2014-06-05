@@ -99,7 +99,10 @@ case "${BACKUP_TYPE}" in
     sudo -u postgres pg_dump -Fc asterisk > ${PG_TMPDIR}/asterisk-${XIVO_VERSION}.dump
     cd ${OLDPWD}
 
+    cpulimit -e gzip -l $GZIP_THROTTLE > /dev/null 2> /dev/null & echo $! > /var/run/cpulimit.gzip.pid
     tar cpzf ${BACKUP_FILE} -C ${TMPDIR} ${PG_DIR}
+    kill -9 `cat /var/run/cpulimit.gzip.pid` ; rm /var/run/cpulimit.gzip.pid
+
     rm -r ${TMPDIR}
     ;;
   *)
